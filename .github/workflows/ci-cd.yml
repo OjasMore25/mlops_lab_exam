@@ -73,14 +73,17 @@ jobs:
         if: steps.compare.outputs.improved == 'True'
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
+      - name: Set up Docker Buildx
+        if: steps.compare.outputs.improved == 'True'
+        uses: docker/setup-buildx-action@v3
+
       - name: Build Docker Image
         if: steps.compare.outputs.improved == 'True'
-        run: docker buildx build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest --load .
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest .
 
       - name: Push Docker Image
         if: steps.compare.outputs.improved == 'True'
-        run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest
 
       - name: Update BEST_MSE Variable
         if: steps.compare.outputs.improved == 'True'
