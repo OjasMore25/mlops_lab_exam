@@ -1,5 +1,9 @@
 name: MLOps Lab Exam CI/CD
 
+permissions:
+  actions: write
+  contents: read
+
 on:
   push:
     branches:
