@@ -101,4 +101,4 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/actions/variables/BEST_MSE \
             -d "{\"name\":\"BEST_MSE\",\"value\":\"$NEW_MSE\"}"
 
-          echo "BEST_MSE updated to $NEW_MSE by Ojas Ganesh More - 2022bcd0043"
+          echo "BEST_MSE updated to $NEW_MSE by Ojas Ganesh More - 2022BCD0043"
