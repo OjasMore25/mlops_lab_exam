@@ -1,0 +1,97 @@
+name: MLOps Lab Exam CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Train Model
+        run: python train.py
+
+      - name: Upload Model Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-artifact
+          path: |
+            model.pkl
+            metrics.json
+
+  deploy:
+    needs: train
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Download Model Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: model-artifact
+
+      - name: Read new MSE
+        id: newmse
+        run: |
+          NEW_MSE=$(python -c "import json; print(json.load(open('metrics.json'))['mse'])")
+          echo "new_mse=$NEW_MSE" >> $GITHUB_OUTPUT
+          echo "New MSE = $NEW_MSE"
+
+      - name: Compare with BEST_MSE
+        id: compare
+        run: |
+          BEST_MSE=${{ vars.BEST_MSE }}
+          NEW_MSE=${{ steps.newmse.outputs.new_mse }}
+
+          echo "BEST_MSE = $BEST_MSE"
+          echo "NEW_MSE = $NEW_MSE"
+
+          RESULT=$(python -c "print(float('$NEW_MSE') < float('$BEST_MSE'))")
+          echo "improved=$RESULT" >> $GITHUB_OUTPUT
+
+      - name: Skip Deployment if not improved
+        if: steps.compare.outputs.improved == 'False'
+        run: |
+          echo "Model did not improve skipping deployment. Evaluated by: Ojas Ganesh More - 2023BCS0043"
+
+      - name: Docker Login
+        if: steps.compare.outputs.improved == 'True'
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image
+        if: steps.compare.outputs.improved == 'True'
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest .
+
+      - name: Push Docker Image
+        if: steps.compare.outputs.improved == 'True'
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest
+
+      - name: Update BEST_MSE Variable
+        if: steps.compare.outputs.improved == 'True'
+        run: |
+          NEW_MSE=${{ steps.newmse.outputs.new_mse }}
+
+          curl -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/variables/BEST_MSE \
+            -d "{\"name\":\"BEST_MSE\",\"value\":\"$NEW_MSE\"}"
+
+          echo "BEST_MSE updated to $NEW_MSE by Ojas Ganesh More - 2023BCS0043"
