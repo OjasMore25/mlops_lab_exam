@@ -67,19 +67,33 @@ jobs:
       - name: Skip Deployment if not improved
         if: steps.compare.outputs.improved == 'False'
         run: |
-          echo "Model did not improve skipping deployment. Evaluated by: Ojas Ganesh More - 2023BCS0043"
+          echo "Model did not improve skipping deployment. Evaluated by: Ojas Ganesh More - 2022BCD0043"
 
       - name: Docker Login
         if: steps.compare.outputs.improved == 'True'
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
+      - name: Debug Workspace
+        if: steps.compare.outputs.improved == 'True'
+        run: |
+          echo "Workspace path:"
+          pwd
+          ls -la
+
       - name: Build Docker Image
         if: steps.compare.outputs.improved == 'True'
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest .
+        working-directory: ${{ github.workspace }}
+        env:
+          DOCKER_BUILDKIT: 0
+        run: |
+          echo "Inside directory:"
+          pwd
+          ls -la
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ojas2022bcd0043:latest .
 
       - name: Push Docker Image
         if: steps.compare.outputs.improved == 'True'
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/ojas2022bcd0043:latest
 
       - name: Update BEST_MSE Variable
         if: steps.compare.outputs.improved == 'True'
@@ -92,4 +106,4 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/actions/variables/BEST_MSE \
             -d "{\"name\":\"BEST_MSE\",\"value\":\"$NEW_MSE\"}"
 
-          echo "BEST_MSE updated to $NEW_MSE by Ojas Ganesh More - 2023BCS0043"
+          echo "BEST_MSE updated to $NEW_MSE by Ojas Ganesh More - 2022BCD0043"
