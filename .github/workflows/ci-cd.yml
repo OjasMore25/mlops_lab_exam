@@ -75,8 +75,7 @@ jobs:
 
       - name: Build Docker Image
         if: steps.compare.outputs.improved == 'True'
-        run: |
-          docker buildx build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest --load .
+        run: docker buildx build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest --load .
 
       - name: Push Docker Image
         if: steps.compare.outputs.improved == 'True'
