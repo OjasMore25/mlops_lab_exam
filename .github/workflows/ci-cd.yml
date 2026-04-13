@@ -73,12 +73,12 @@ jobs:
         if: steps.compare.outputs.improved == 'True'
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Build Docker Image (BuildKit Disabled)
+      - name: Build Docker Image
         if: steps.compare.outputs.improved == 'True'
         env:
           DOCKER_BUILDKIT: 0
           COMPOSE_DOCKER_CLI_BUILD: 0
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest .
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ojas_2023bcs0043:latest $GITHUB_WORKSPACE
 
       - name: Push Docker Image
         if: steps.compare.outputs.improved == 'True'
