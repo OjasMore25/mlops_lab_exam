@@ -73,27 +73,22 @@ jobs:
         if: steps.compare.outputs.improved == 'True'
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Debug Workspace
-        if: steps.compare.outputs.improved == 'True'
-        run: |
-          echo "Workspace path:"
-          pwd
-          ls -la
-
       - name: Build Docker Image
         if: steps.compare.outputs.improved == 'True'
-        working-directory: ${{ github.workspace }}
         env:
           DOCKER_BUILDKIT: 0
         run: |
-          echo "Inside directory:"
-          pwd
-          ls -la
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ojas2022bcd0043:latest .
+          docker build -t myimage:latest .
+
+      - name: Tag Docker Image
+        if: steps.compare.outputs.improved == 'True'
+        run: |
+          docker tag myimage:latest ${{ secrets.DOCKERHUB_USERNAME }}/ojas2022bcd0043:latest
 
       - name: Push Docker Image
         if: steps.compare.outputs.improved == 'True'
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/ojas2022bcd0043:latest
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ojas2022bcd0043:latest
 
       - name: Update BEST_MSE Variable
         if: steps.compare.outputs.improved == 'True'
